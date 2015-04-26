@@ -1,66 +1,57 @@
-﻿
-Shader "Custom/DrawBuffer" 
+﻿Shader "Custom/DrawBuffer"
 {
-	SubShader 
+	Properties
 	{
-		Pass 
-		{
-			Cull back
-
-			CGPROGRAM
-			#include "UnityCG.cginc"
-			#pragma target 5.0
-			#pragma vertex vert
-			#pragma fragment frag
-			
-			struct Vert
-			{
-				float4 position;
-				float3 normal;
-			};
-
-			uniform StructuredBuffer<Vert> _Buffer;
-			int _IdOffset;
-
-			struct v2f 
-			{
-				float4  pos : SV_POSITION;
-				float3 col : Color;
-			};
-
-			v2f vert(appdata_base v)
-			{
-				Vert vert = _Buffer[v.texcoord.x + _IdOffset];
-
-				v2f OUT;
-				OUT.pos = mul(UNITY_MATRIX_MVP, float4(vert.position.xyz, 1));
-
-				OUT.col = dot(float3(0, 1, 0), vert.normal) * 0.5 + 0.5;
-
-				return OUT;
-			}
-
-			/*
-			v2f vert(uint id : SV_VertexID)
-			{
-				Vert vert = _Buffer[id];
-
-				v2f OUT;
-				OUT.pos = mul(UNITY_MATRIX_MVP, float4(vert.position.xyz, 1));
-				
-				OUT.col = dot(float3(0,1,0), vert.normal) * 0.5 + 0.5;
-				
-				return OUT;
-			}
-			*/
-
-			float4 frag(v2f IN) : COLOR
-			{
-				return float4(IN.col,1);
-			}
-
-			ENDCG
-
-		}
+		_Color ("Color", Color) = (1,1,1,1)
+		_Glossiness ("Smoothness", Range(0,1)) = 0.5
+		_Metallic ("Metallic", Range(0,1)) = 0.0
 	}
+	SubShader
+	{
+		Tags { "RenderType"="MarchingCubes" }
+		
+		CGPROGRAM
+
+		#pragma surface surf Standard fullforwardshadows vertex:vert
+		#pragma target 5.0
+
+		struct Vertex
+		{
+			float4 position;
+			float3 normal;
+		};
+
+		half4 _Color;
+		half _Glossiness;
+		half _Metallic;
+
+#ifdef SHADER_API_D3D11
+		StructuredBuffer<Vertex> _Buffer;
+		int _IdOffset;
+#endif
+
+		void vert(inout appdata_full v)
+		{
+#ifdef SHADER_API_D3D11
+			Vertex vert = _Buffer[v.texcoord.x + _IdOffset];
+			v.vertex.xyz = vert.position.xyz;
+			v.normal = vert.normal;
+#endif
+		}
+
+		struct Input
+		{
+			float not_in_use;
+		};
+
+		void surf(Input IN, inout SurfaceOutputStandard o)
+		{
+			o.Albedo = _Color.rgb;
+			o.Metallic = _Metallic;
+			o.Smoothness = _Glossiness;
+			o.Alpha = _Color.a;
+		}
+		ENDCG
+	} 
+	FallBack "Diffuse"
 }

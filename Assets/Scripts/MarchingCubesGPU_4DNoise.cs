@@ -90,7 +90,7 @@ public class MarchingCubesGPU_4DNoise : MonoBehaviour
 		m_perlinNoise.SetFloat("_Frequency", 0.02f);
 		m_perlinNoise.SetFloat("_Lacunarity", 2.0f);
 		m_perlinNoise.SetFloat("_Gain", 0.5f);
-		m_perlinNoise.SetFloat("_Time", Time.realtimeSinceStartup * m_speed);
+		m_perlinNoise.SetFloat("_Time", Time.time * m_speed);
 		m_perlinNoise.SetTexture(0, "_PermTable1D", perlin.GetPermutationTable1D());
 		m_perlinNoise.SetTexture(0, "_PermTable2D", perlin.GetPermutationTable2D());
 		m_perlinNoise.SetTexture(0, "_Gradient4D", perlin.GetGradient4D());
@@ -131,17 +131,6 @@ public class MarchingCubesGPU_4DNoise : MonoBehaviour
             Graphics.DrawMesh(m_mesh, transform.localToWorldMatrix, m_drawBuffer, 0, null, 0, prop);
         }
     }
-	
-	/*
-    void OnPostRender()
-	{
-		//Since mesh is in a buffer need to use DrawProcedual called from OnPostRender or OnRenderObject
-		m_drawBuffer.SetBuffer("_Buffer", m_meshBuffer);
-		m_drawBuffer.SetPass(0);
-		
-		Graphics.DrawProcedural(MeshTopology.Triangles, SIZE);
-	}
-    */
 	
 	void OnDestroy()
 	{
