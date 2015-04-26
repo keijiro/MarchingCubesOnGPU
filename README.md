@@ -8,5 +8,7 @@ mesh from 4D Perlin noise volume with using [the marching cubes algorithm]
 vertex data from the compute buffer, and renders it with the physically based
 standard shader.
 
+![Screen shot](http://keijiro.github.io/MarchingCubesOnGPU/screen.png)
+
 The compute shaders in this example are borrowed from [Scrawk's example]
 (http://scrawkblog.com/2014/10/16/marching-cubes-on-the-gpu-in-unity/).
