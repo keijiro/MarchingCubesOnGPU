@@ -132,7 +132,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 	float4 uv = float4(id.xyz, _Time);
 
 	//uncomment this for fractal noise
-	float n = fBm(uv, 4);
+	float n = fBm(uv, 4) * 6 - 0.8 + uv.z * 0.1;
 
 	//uncomment this for turbulent noise
 	//float n = turbulence(uv, 4);

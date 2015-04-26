@@ -31,7 +31,9 @@ public class MarchingCubesGPU_4DNoise : MonoBehaviour
 	ComputeBuffer m_cubeEdgeFlags, m_triangleConnectionTable;
 	
 	ImprovedPerlinNoise perlin;
-	
+
+    Mesh m_mesh;
+
 	void Start () 
 	{
 		//There are 8 threads run per group so N must be divisible by 8.
@@ -56,11 +58,28 @@ public class MarchingCubesGPU_4DNoise : MonoBehaviour
 		//Make the perlin noise, make sure to load resources to match shader used.
 		perlin = new ImprovedPerlinNoise(m_seed);
 		perlin.LoadResourcesFor4DNoise();
-		
-	}
-	
-	
-	void Update () 
+
+        //Constract a mesh.
+        var vcount = N * N * 3 * 5;
+        var vertices = new Vector3[vcount];
+
+        var uv = new Vector2[vcount];
+        for (var i = 0; i < vcount; i++)
+            uv[i] = new Vector2(i, 0);
+
+        var indices = new int[vcount];
+        for (var i = 0; i < vcount; i++)
+            indices[i] = i;
+
+        m_mesh = new Mesh();
+        m_mesh.vertices = vertices;
+        m_mesh.uv = uv;
+        m_mesh.SetIndices(indices, MeshTopology.Triangles, 0);
+        m_mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
+    }
+
+
+    void Update () 
 	{
 		//must reset mesh verts to 0 each frame.
 		m_meshBuffer.SetData(new float[SIZE*7]);
@@ -100,9 +119,21 @@ public class MarchingCubesGPU_4DNoise : MonoBehaviour
 		m_marchingCubes.SetBuffer(0, "_TriangleConnectionTable", m_triangleConnectionTable);
 		
 		m_marchingCubes.Dispatch(0, N/8, N/8, N/8);
-	}
+
+        m_drawBuffer.SetBuffer("_Buffer", m_meshBuffer);
+        m_drawBuffer.SetPass(0);
+
+        var prop = new MaterialPropertyBlock();
+
+        for (var i = 0; i < N; i++)
+        {
+            prop.SetFloat("_IdOffset", i * N * N * 3 * 5);
+            Graphics.DrawMesh(m_mesh, transform.localToWorldMatrix, m_drawBuffer, 0, null, 0, prop);
+        }
+    }
 	
-	void OnPostRender()
+	/*
+    void OnPostRender()
 	{
 		//Since mesh is in a buffer need to use DrawProcedual called from OnPostRender or OnRenderObject
 		m_drawBuffer.SetBuffer("_Buffer", m_meshBuffer);
@@ -110,6 +141,7 @@ public class MarchingCubesGPU_4DNoise : MonoBehaviour
 		
 		Graphics.DrawProcedural(MeshTopology.Triangles, SIZE);
 	}
+    */
 	
 	void OnDestroy()
 	{

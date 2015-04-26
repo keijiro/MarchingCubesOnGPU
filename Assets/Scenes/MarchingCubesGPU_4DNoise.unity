@@ -20,12 +20,12 @@ RenderSettings:
   m_FogDensity: .00999999978
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
-  m_AmbientEquatorColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
-  m_AmbientGroundColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
+  m_AmbientSkyColor: {r: .211999997, g: .226999998, b: .259000003, a: 1}
+  m_AmbientEquatorColor: {r: .114, g: .125, b: .133000001, a: 1}
+  m_AmbientGroundColor: {r: .0469999984, g: .0430000015, b: .0350000001, a: 1}
   m_AmbientIntensity: 1
   m_AmbientMode: 0
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 148b939993b7cd84fa6c4b0e9183198d, type: 2}
   m_HaloStrength: .5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -44,7 +44,7 @@ LevelGameManager:
 LightmapSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 5
-  m_GIWorkflowMode: 1
+  m_GIWorkflowMode: 0
   m_LightmapsMode: 1
   m_GISettings:
     serializedVersion: 2
@@ -53,19 +53,19 @@ LightmapSettings:
     m_AlbedoBoost: 1
     m_TemporalCoherenceThreshold: 1
     m_EnvironmentLightingMode: 0
-    m_EnableBakedLightmaps: 0
-    m_EnableRealtimeLightmaps: 0
+    m_EnableBakedLightmaps: 1
+    m_EnableRealtimeLightmaps: 1
   m_LightmapEditorSettings:
     serializedVersion: 3
-    m_Resolution: 1
-    m_BakeResolution: 50
+    m_Resolution: 2
+    m_BakeResolution: 40
     m_TextureWidth: 1024
     m_TextureHeight: 1024
     m_AOMaxDistance: 1
     m_Padding: 2
     m_CompAOExponent: 0
     m_LightmapParameters: {fileID: 0}
-    m_TextureCompression: 0
+    m_TextureCompression: 1
     m_FinalGather: 0
     m_FinalGatherRayCount: 1024
   m_LightmapSnapshot: {fileID: 0}
@@ -99,7 +99,6 @@ GameObject:
   - 92: {fileID: 128636656}
   - 124: {fileID: 128636655}
   - 81: {fileID: 128636653}
-  - 114: {fileID: 128636658}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -114,10 +113,10 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 128636651}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 20, z: -80}
+  m_LocalPosition: {x: 0, y: 20, z: -40}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 167590532}
   m_RootOrder: 0
 --- !u!81 &128636653
 AudioListener:
@@ -176,23 +175,34 @@ Camera:
   m_OcclusionCulling: 0
   m_StereoConvergence: 10
   m_StereoSeparation: .0219999999
---- !u!114 &128636658
-MonoBehaviour:
+--- !u!1 &167590531
+GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 128636651}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: efce3014af9c6194197849dd056e3f11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_seed: 0
-  m_speed: 2
-  m_drawBuffer: {fileID: 2100000, guid: 99125ff1a74b745489673a89bac7fb46, type: 2}
-  m_perlinNoise: {fileID: 7200000, guid: b82421ddd2feaaf4190e9b5b7b09af69, type: 3}
-  m_marchingCubes: {fileID: 7200000, guid: cbefffa4c1505b54689332f612d627e6, type: 3}
-  m_normals: {fileID: 7200000, guid: 8f22bc50351139e4c8c6f8222864a4c2, type: 3}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 167590532}
+  m_Layer: 0
+  m_Name: Camera Pivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &167590532
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 167590531}
+  m_LocalRotation: {x: .366501272, y: 0, z: 0, w: .930417538}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 128636652}
+  m_Father: {fileID: 0}
+  m_RootOrder: 2
 --- !u!1 &322445611
 GameObject:
   m_ObjectHideFlags: 0
@@ -248,6 +258,51 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 322445611}
   m_LocalRotation: {x: .408217937, y: -.234569728, z: .109381676, w: .875426054}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+--- !u!1 &1835025552
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1835025554}
+  - 114: {fileID: 1835025553}
+  m_Layer: 0
+  m_Name: Marching Cubes
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1835025553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1835025552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efce3014af9c6194197849dd056e3f11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_seed: 1
+  m_speed: 4
+  m_drawBuffer: {fileID: 2100000, guid: 99125ff1a74b745489673a89bac7fb46, type: 2}
+  m_perlinNoise: {fileID: 7200000, guid: b82421ddd2feaaf4190e9b5b7b09af69, type: 3}
+  m_marchingCubes: {fileID: 7200000, guid: cbefffa4c1505b54689332f612d627e6, type: 3}
+  m_normals: {fileID: 7200000, guid: 8f22bc50351139e4c8c6f8222864a4c2, type: 3}
+--- !u!4 &1835025554
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1835025552}
+  m_LocalRotation: {x: .707106829, y: 0, z: 0, w: .707106709}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
