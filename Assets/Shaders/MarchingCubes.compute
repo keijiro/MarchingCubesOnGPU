@@ -1,0 +1,181 @@
+﻿
+#pragma kernel CSMain
+
+struct Vert
+{
+	float4 position;
+	float3 normal;
+};
+
+float _Target;
+
+int _Width, _Height, _Depth, _Border;
+
+StructuredBuffer<int> _TriangleConnectionTable;
+
+StructuredBuffer<int> _CubeEdgeFlags;
+
+StructuredBuffer<float> _Voxels;
+
+StructuredBuffer<float3> _Normals;
+
+RWStructuredBuffer<Vert> _Buffer;
+
+// edgeConnection lists the index of the endpoint vertices for each of the 12 edges of the cube
+static int2 edgeConnection[12] =
+{
+    int2(0,1), int2(1,2), int2(2,3), int2(3,0), int2(4,5), int2(5,6), int2(6,7), int2(7,4), int2(0,4), int2(1,5), int2(2,6), int2(3,7)
+};
+
+// edgeDirection lists the direction vector (vertex1-vertex0) for each edge in the cube
+static float3 edgeDirection[12] =
+{
+    float3(1.0f, 0.0f, 0.0f),float3(0.0f, 1.0f, 0.0f),float3(-1.0f, 0.0f, 0.0f),float3(0.0f, -1.0f, 0.0f),
+    float3(1.0f, 0.0f, 0.0f),float3(0.0f, 1.0f, 0.0f),float3(-1.0f, 0.0f, 0.0f),float3(0.0f, -1.0f, 0.0f),
+    float3(0.0f, 0.0f, 1.0f),float3(0.0f, 0.0f, 1.0f),float3( 0.0f, 0.0f, 1.0f),float3(0.0f,  0.0f, 1.0f)
+};
+
+// vertexOffset lists the positions, relative to vertex0, of each of the 8 vertices of a cube
+static float3 vertexOffset[8] =
+{
+    float3(0, 0, 0),float3(1, 0, 0),float3(1, 1, 0),float3(0, 1, 0),
+    float3(0, 0, 1),float3(1, 0, 1),float3(1, 1, 1),float3(0, 1, 1)
+};
+	
+void FillCube(int x, int y, int z, out float cube[8])
+{
+	cube[0] = _Voxels[x + y * _Width + z * _Width * _Height];
+	cube[1] = _Voxels[(x+1) + y * _Width + z * _Width * _Height];
+	cube[2] = _Voxels[(x+1) + (y+1) * _Width + z * _Width * _Height];
+	cube[3] = _Voxels[x + (y+1) * _Width + z * _Width * _Height];
+	
+	cube[4] = _Voxels[x + y * _Width + (z+1) * _Width * _Height];
+	cube[5] = _Voxels[(x+1) + y * _Width + (z+1) * _Width * _Height];
+	cube[6] = _Voxels[(x+1) + (y+1) * _Width + (z+1) * _Width * _Height];
+	cube[7] = _Voxels[x + (y+1) * _Width + (z+1) * _Width * _Height];
+}
+
+// GetOffset finds the approximate point of intersection of the surface
+// between two points with the values v1 and v2
+float GetOffset(float v1, float v2)
+{
+    float delta = v2 - v1;
+    return (delta == 0.0f) ? 0.5f : (_Target - v1) / delta;
+}
+
+//Samples a structed buffer same as a bilinear filter texture.
+//If you have pro best to use render textures as this is a bit slow.
+float3 SampleBilinear(StructuredBuffer<float3> buffer, float3 uv)
+{
+	int x = uv.x;
+	int y = uv.y;
+	int z = uv.z;
+	
+	int X = _Width;
+	int XY = _Width*_Height;
+	
+	float fx = uv.x-x;
+	float fy = uv.y-y;
+	float fz = uv.z-z;
+	
+	int xp1 = min(_Width-1, x+1);
+	int yp1 = min(_Height-1, y+1);
+	int zp1 = min(_Depth-1, z+1);
+	
+	float3 x0 = buffer[x+y*X+z*XY] * (1.0f-fx) + buffer[xp1+y*X+z*XY] * fx;
+	float3 x1 = buffer[x+y*X+zp1*XY] * (1.0f-fx) + buffer[xp1+y*X+zp1*XY] * fx;
+	
+	float3 x2 = buffer[x+yp1*X+z*XY] * (1.0f-fx) + buffer[xp1+yp1*X+z*XY] * fx;
+	float3 x3 = buffer[x+yp1*X+zp1*XY] * (1.0f-fx) + buffer[xp1+yp1*X+zp1*XY] * fx;
+	
+	float3 z0 = x0 * (1.0f-fz) + x1 * fz;
+	float3 z1 = x2 * (1.0f-fz) + x3 * fz;
+	
+	return z0 * (1.0f-fy) + z1 * fy;
+
+}
+
+[numthreads(8,8,8)]
+void CSMain (int3 id : SV_DispatchThreadID)
+{
+	//Dont generate verts at the edge as they dont have 
+	//neighbours to make a cube from and the normal will 
+	//not be correct around border.
+	if(id.x >= _Width - 1 - _Border) return;
+	if(id.y >= _Height - 1 - _Border) return;
+	if(id.z >= _Depth - 1 - _Border) return;
+
+	float3 pos = float3(id);
+	float3 centre = float3(_Width, 0, _Depth) / 2.0;
+	
+	float cube[8];
+	FillCube(id.x, id.y, id.z, cube);
+	
+	int i = 0, j = 0;
+	int flagIndex = 0;	
+	float3 edgeVertex[12];
+	
+	//Find which vertices are inside of the surface and which are outside
+	for(i = 0; i < 8; i++) 
+		if(cube[i] <= _Target) flagIndex |= 1<<i;
+		
+	//Find which edges are intersected by the surface
+	int edgeFlags = _CubeEdgeFlags[flagIndex];
+	
+	// no connections, return
+	if(edgeFlags == 0) return;
+	
+    //Find the point of intersection of the surface with each edge
+    for(i = 0; i < 12; i++)
+    {
+        //if there is an intersection on this edge
+        if((edgeFlags & (1<<i)) != 0)
+        {
+         	float offset = GetOffset(cube[edgeConnection[i].x], cube[edgeConnection[i].y]);
+
+        	edgeVertex[i] = pos + (vertexOffset[edgeConnection[i].x] + offset * edgeDirection[i]);
+        }
+    }
+    
+    int idx = id.x + id.y * _Width + id.z * _Width * _Height;
+    
+	//Save the triangles that were found. There can be up to five per cube
+	for(i = 0; i < 5; i++)
+	{
+		//If the connection table is not -1 then this a triangle.
+	    if(_TriangleConnectionTable[flagIndex * 16 + 3*i] >= 0)
+	    {
+		    for(j = 0; j < 3; j++)
+		    {
+		        int v = _TriangleConnectionTable[flagIndex * 16 + (3*i+j)];
+		        
+		        float3 position = edgeVertex[v];
+		        
+		        Vert vert;
+		        vert.position = float4(position - centre, 1.0);
+		        vert.normal = SampleBilinear(_Normals, position);
+		        
+				_Buffer[idx * 15 + (3*i+j)] = vert;
+		    }
+	    }
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
